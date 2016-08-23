@@ -1,104 +1,9 @@
 const url = '4side';
 
 let Template = (function(){
-    function Template(){
+    function Template(){}
 
-        this.templateReturnedText = {
-
-            _CREATE: function(text){
-                if(!text) return 'Standard Bug';
-
-                return "Bug: Description \n\n" + 
-                "*Description* \n\n"  + 
-                "[Short description of problem in narrative form] \n\n"+ 
-                "*Pre-conditions* \n\n"  + 
-                "bq.Optional. Please delete if not filled \n\n"+ 
-                "*Steps to reproduce* \n\n" + 
-                "* [Step 1]\n"+ 
-                "* [Step 2]\n"+ 
-                "* [Step N]\n\n"+ 
-                "*Actual Result*\n\n"+ 
-                "[The most complete description of actual results]\n\n"+ 
-                "*Expected Result*\n\n"+ 
-                "[Besides stating what the expected result is please provide the reasoning for this - requirement, previous production behavior, etc.]\n\n"+ 
-                "*Regression from version* <version> \n\n"+ 
-                "{quote}Optional.  Please delete if there's no regression. Otherwise list builds on which this issue is reproduced or what is latest build where it becomes not reproducible: \n"+ 
-                "_Reproducible on_ <build1>, <build2> \n"+ 
-                "_Not reproducible on_ <build> \n"+ 
-                "{quote} \n\n"+ 
-                "Bug: Environment \n\n"+ 
-                "*POD/instance*:\n"+ 
-                "*Build (platform)*:\n"+ 
-                "*Build (SS)*: <shared service, delete if not needed>\n"+ 
-                "*Browser*:\n"+ 
-                "*Device OS*:\n\n"+ 
-                "Bug: Comment for QA result \n\n"+
-                "*Environment*\n"+
-                "*POD/instance*:\n"+
-                "*Build (platform)*:\n"+
-                "*Build (SS)*: <shared service, delete if not needed>\n"+
-                "*Browser*:\n"+
-                "*Device OS*:\n"+
-                "*Resolution*: {color:green}fixed{color} | {color:red}not fixed{color}\n\n"+
-                "*Verification information*\n\n"+
-                "{quote}[Optional. Please delete if not filled. Otherwise specify\n"+
-                "What was tested - detailed list.\n"+
-                "Steps performed.\n"+
-                "Description of current result or current system behavior]{quote}";
-            },
-            _FIX: function(text){
-                if(!text) return 'Defect(Fix)';
-
-                return "*Note type: @RR@* \n\n" +
-                "*Description:* \n\n" +
-                "[Optional. Please delete if not filled." + 
-                "Describe actual behavior vs expected behavior ] \n\n" +
-                "*Workaround:* \n\n" +
-                "[Optional. Please delete if not filled." +
-                "Describe possible workaround] \n\n" +
-                "*Root Cause:* \n\n" +
-                "[Meaningful explanation of the issue root cause ] \n\n" +
-                "*Change Description:* \n\n" +
-                "[description of changes performed to fix the issue] \n\n" +
-                "*Side effects:* \n\n" +
-                "[Optional. Please delete if not filled." +
-                "The list of impacted system components]";
-
-            },
-            _NOT_REPRODUCED: function(text){
-                if(!text) return 'Defect(Not reproduced)';
-
-                return "*Attempted steps:* \n\n" +
-                "* [Step 1] \n" +
-                "* [Step 2] \n" +
-                "* [Step N] \n\n" +
-                "*Obtained result:* \n\n" + 
-                "[The most complete description of obtained results] \n\n" +
-                "*Additional information:* \n\n" +
-                "[Optional. Please delete if not filled.DB dump, browser, etc]";
-
-            },
-            _WORK_AS_DESIGN: function(text){
-                if(!text) return 'Defect(Work as design)';
-
-                return "*Work as designed:* \n\n" +
-                "[please explain why actual behavior corresponds to originally designed functionality]";
-
-            },
-            _WILL_NOT_FIX: function(text){
-                if(!text) return 'Defect(Will not fix)';
-
-                return "*Reason:*  \n\n" +
-                "[please explain why this defect will not be fixed] \n\n" +
-                "*Workaround:* \n\n" +
-                "[Optional. Please delete if not filled.Describe possible workaround]";
-
-            }
-        }
-
-    }
-
-    Template.prototype.getWindowContextMenu = function(x, y){
+    Template.prototype.getWindowContextMenu = function(x, y, template){
         
         let str = `<div style="z-index: 999999; width: 100%; height: 100%; position: fixed; overflow: hidden;" class="window-background-full-for-context-menu">
                         <div class="ajs-layer box-shadow active" id="gh-ctx-menu-trigger_drop" aria-hidden="false" style="position: absolute; left: `+x+`px; top: `+y+`px; max-height: 663px;">
@@ -110,13 +15,20 @@ let Template = (function(){
                                 <h5>Template for:</h5>
                                 <ul class="aui-list-section aui-first">`;
 
-                                    for(let keys in this.templateReturnedText){
+                                    for(let keys in template){
                                         str += `<li id="ghx-issue-ctx-action-flag-toggle-container" class="aui-list-item">
-                                                    <a class="aui-list-item-link js-context-menu-action jira-hover-to-need-in-css" data-attr-link="`+keys+`" title="`+this.templateReturnedText[keys]()+`" href="#">`+this.templateReturnedText[keys]()+`</a>
+                                                    <a class="aui-list-item-link js-context-menu-action jira-hover-to-need-in-css" data-attr-link="`+keys+`" title="`+keys+`" href="#">`+keys+`</a>
                                                 </li>`
                                     }
 
             str +=  `</ul></div></div></div>`;             
+        return str;
+    }
+    Template.prototype.reternedTextTemplate = function(elems){
+        let str = "";
+        for(p of elems){
+            str += (p.innerText.indexOf("*") == 0 && p.innerText.lastIndexOf("*") > -1) ? "\n" + p.innerText + "\n\n";
+        }
         return str;
     }
     return new Template;
@@ -127,31 +39,39 @@ let App = (function(){
     function App(){
 
         this.location = window.location.host;
+        this.templates;
     }
 
     App.prototype.init = function(){
 
-         console.log(this.location.indexOf(url))
-
         if(this.location.indexOf(url) == -1) return;
         
-        this.xhr();
-
-        /*this.mutation();
-        this.addStyle();*/
+        this.xhrRequestToBackground();
 
     };
 
-    App.prototype.xhr = function(){
+    App.prototype.xhrRequestToBackground = function(){
 
-        
         self.port.emit("makeRequest", "https://confluence.oraclecorp.com/confluence/rest/api/content/245243734?expand=space,body.view,version,container");
-
-        self.port.on("makeResponse", function(tag) {
-            console.log(tag);
-        });
-
+        self.port.on("makeResponse", this.responseFromConfluense.bind(this));
         
+    }
+
+    App.prototype.responseFromConfluense = function (obj) {
+
+        let hiddenElement = document.createElement('div');
+
+        hiddenElement.innerHTML = obj;
+
+        let table = hiddenElement.querySelectorAll('table tr');
+
+        for(tr of table){
+            this.templates[tr.firstElementChild.innerText] = Template.reternedTextTemplate(tr.lastElementChild.children);
+        }
+
+
+        this.mutation();
+        this.addStyle();
     }
 
     App.prototype.addStyle = function(){
@@ -207,7 +127,7 @@ let App = (function(){
         let target = event && event.target,
             positionX = event.clientX,
             positionY = event.clientY,
-            template = Template.getWindowContextMenu(positionX, positionY),
+            template = Template.getWindowContextMenu(positionX, positionY, this.templates),
             blockListMenu;
 
             document.body.insertAdjacentHTML('afterBegin', template);
@@ -229,7 +149,7 @@ let App = (function(){
             return;
         };
 
-        let template = Template.templateReturnedText[targetAttr] ? Template.templateReturnedText[targetAttr](true) : null;
+        let template = this.templates[targetAttr] ? this.templates[targetAttr] : null;
 
         if(template){
             targetParent.value = template;
