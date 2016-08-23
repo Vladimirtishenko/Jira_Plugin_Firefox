@@ -1,4 +1,4 @@
-const url = '4side';
+const url = 'jira';
 
 let Template = (function(){
     function Template(){}
@@ -27,7 +27,7 @@ let Template = (function(){
     Template.prototype.reternedTextTemplate = function(elems){
         let str = "";
         for(p of elems){
-            str += (p.innerText.indexOf("*") == 0 && p.innerText.lastIndexOf("*") > -1) ? "\n" + p.innerText + "\n\n";
+            str += (p.textContent.indexOf("*") == 0 && p.textContent.lastIndexOf("*") > -1) ? "\n" + p.textContent + "\n\n" : p.textContent + "\n";
         }
         return str;
     }
@@ -39,7 +39,7 @@ let App = (function(){
     function App(){
 
         this.location = window.location.host;
-        this.templates;
+        this.templates = {};
     }
 
     App.prototype.init = function(){
@@ -52,23 +52,23 @@ let App = (function(){
 
     App.prototype.xhrRequestToBackground = function(){
 
-        self.port.emit("makeRequest", "https://confluence.oraclecorp.com/confluence/rest/api/content/245243734?expand=space,body.view,version,container");
-        self.port.on("makeResponse", this.responseFromConfluense.bind(this));
+        self.port.emit('makeRequest', 'https://confluence.oraclecorp.com/confluence/rest/api/content/245243734?expand=space,body.view,version,container');
+        self.port.on('makeResponse', this.responseFromConfluense.bind(this));
         
     }
 
     App.prototype.responseFromConfluense = function (obj) {
 
-        let hiddenElement = document.createElement('div');
+        let body = obj.body.view.value,
+            hiddenElement = document.createElement('div');
 
-        hiddenElement.innerHTML = obj;
+        hiddenElement.innerHTML = body;
 
-        let table = hiddenElement.querySelectorAll('table tr');
+        let table = hiddenElement.querySelectorAll('table tr'); 
 
         for(tr of table){
-            this.templates[tr.firstElementChild.innerText] = Template.reternedTextTemplate(tr.lastElementChild.children);
+            this.templates[tr.firstElementChild.textContent] = Template.reternedTextTemplate(tr.lastElementChild.children);
         }
-
 
         this.mutation();
         this.addStyle();

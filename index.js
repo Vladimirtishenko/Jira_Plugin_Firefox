@@ -29,8 +29,10 @@ pageMod.PageMod({
         worker.port.on("makeRequest", function(url) {
             Request({
                 url: url,
+                overrideMimeType: "text/plain",
+                contentType: "application/json",
                 onComplete: function(response) {
-                    worker.port.emit("makeResponse", response.text);
+                    worker.port.emit("makeResponse", response.json);
                 }
             }).get();
         });
